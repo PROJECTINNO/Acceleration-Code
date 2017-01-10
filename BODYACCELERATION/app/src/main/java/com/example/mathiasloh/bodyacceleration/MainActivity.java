@@ -441,7 +441,7 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
 
             }
 
-            float[] res = new float[];
+            float res[] = new float[accx.size()*2];
             for(int i = 0; i<points.size();i++){
                 res[i] = points.get(i);
             }
