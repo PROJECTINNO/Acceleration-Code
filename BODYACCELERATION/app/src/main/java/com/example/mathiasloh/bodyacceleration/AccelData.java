@@ -12,35 +12,69 @@ public class AccelData {
     private ArrayList<Double> y;
     private ArrayList<Double> z;
 
-    public AccelData(long timestamp, double x, double y, double z) {
-        this.timestamp = timestamp;
-        this.x = x;
-        this.y = y;
-        this.z = z;
+
+
+    public AccelData() {
+        this.timestamp =new ArrayList<Long>();
+        this.x = new ArrayList<Double>();
+        this.y = new ArrayList<Double>();
+        this.z = new ArrayList<Double>();
     }
-    public long getTimestamp() {
+
+    public ArrayList<Long> getTimestamp() {
         return timestamp;
     }
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-    public double getX() {
+
+    public ArrayList<Double> getX() {
         return x;
     }
-    public void setX(double x) {
-        this.x = x;
-    }
-    public double getY() {
+
+    public ArrayList<Double> getY() {
         return y;
     }
-    public void setY(double y) {
-        this.y = y;
-    }
-    public double getZ() {
+
+    public ArrayList<Double> getZ() {
         return z;
     }
-    public void setZ(double z) {
+
+    public void setTimestamp(ArrayList<Long> timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public void setX(ArrayList<Double> x) {
+        this.x = x;
+    }
+
+    public void setY(ArrayList<Double> y) {
+        this.y = y;
+    }
+
+    public void setZ(ArrayList<Double> z) {
         this.z = z;
+    }
+
+    public void addTimestamp(long t) {
+        ArrayList<Long> old = this.getTimestamp();
+        old.add(t);
+        this.setTimestamp(old);
+    }
+
+    public void addX(double x) {
+        ArrayList<Double> old = this.getX();
+        old.add(x);
+        this.setX(old);
+    }
+
+    public void addY(double y) {
+        ArrayList<Double> old = this.getY();
+        old.add(y);
+        this.setX(old);
+    }
+
+    public void addZ(double z) {
+        ArrayList<Double> old = this.getZ();
+        old.add(z);
+        this.setX(old);
     }
 
     public String toString()
