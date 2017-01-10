@@ -1,5 +1,7 @@
 package com.example.mathiasloh.bodyacceleration;
 
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.os.Bundle;
 
 import java.util.ArrayList;
@@ -24,12 +26,13 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
-public class MainActivity extends Activity implements SensorEventListener, OnClickListener {
+public class MainActivity extends Activity implements SensorEventListener, OnClickListener{
     private SensorManager sensorManager;
     private Button btnStart, btnAcceleration, btnComparison, btntestcurves;
     private boolean started = false;
     private LinearLayout layout;
     private GraphicalView mChart;
+    private MyView mDrawing;
     float[] mGravf = null;
     float[] mMagnetf = null;
     private AccelData sensorData;
@@ -42,6 +45,9 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
     private ArrayList<Double> treated_data_x;
     private ArrayList<Double> treated_data_y;
     private ArrayList<Double> treated_data_z;
+    private Canvas canvas = new Canvas();
+    private Paint paint = new Paint();
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -70,6 +76,24 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
         }
     }
 
+    public class MyView extends View{
+        private float[] x;
+        public MyView(Context context, float[] x){
+            super(context);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            Paint paint = new Paint();
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(Color.WHITE);
+            // Use Color.parseColor to define HTML colors
+            paint.setColor(Color.parseColor("#CD5C5C"));
+            canvas.drawLines(x, paint);
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -88,6 +112,7 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
+
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -345,6 +370,8 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
             multiRenderer.setYLabelsColor(0, Color.BLACK);
             multiRenderer.setXLabelsColor(Color.BLACK);
             multiRenderer.setScale(3);
+            multiRenderer.setPointSize(40);
+
             // --------- End Setup MultiRenderer --------------------------------//
 
             // --------- Raw Acceleration Data ---------------------------------//
@@ -363,6 +390,7 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
             xyRenderer.setFillPoints(true);
             xyRenderer.setLineWidth(1);
             xyRenderer.setDisplayChartValues(false);
+
 
             multiRenderer.addSeriesRenderer(xyRenderer);
             // --------- Raw Acceleration Data ---------------------------------//
@@ -396,11 +424,30 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
             // --------- Smooth Acceleration Data -----------------------------//
 
             // --------- Plotting the graphs ---------------------------------//
-            mChart = ChartFactory.getLineChartView(getBaseContext(), dataset,
-                    multiRenderer);
-
-            layout.addView(mChart);
+//            mChart = ChartFactory.getLineChartView(getBaseContext(), dataset,
+//                    multiRenderer);
+//
+//            layout.addView(mChart);
             // --------- End Plotting the graphs -----------------------------//
+
+
+            // --------- Plotting the drawing ---------------------------------//
+            ArrayList<Float> points = new ArrayList<Float>();
+            for(int i = 0; i < accx.size()-1; i+=2){
+                points.add(Float.parseFloat(Double.toString(accx.get(i))));
+                points.add(Float.parseFloat(Double.toString(accy.get(i))));
+                points.add(Float.parseFloat(Double.toString(accx.get(i+1))));
+                points.add(Float.parseFloat(Double.toString(accy.get(i+1))));
+
+            }
+
+            float[] res = new float[];
+            for(int i = 0; i<points.size();i++){
+                res[i] = points.get(i);
+            }
+
+            layout.addView(mDrawing);
+            // --------- End Plotting the drawing -----------------------------//
         }
     }
 
