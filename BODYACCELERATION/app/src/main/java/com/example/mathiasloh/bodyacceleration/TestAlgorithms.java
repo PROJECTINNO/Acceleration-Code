@@ -6,14 +6,6 @@ package com.example.mathiasloh.bodyacceleration;
 
 import java.util.ArrayList;
 
-package com.example.mathiasloh.caliaccelread;
-
-import java.util.ArrayList;
-
-/**
- * Created by mathiasloh on 6/12/16.
- */
-
 public final class TestAlgorithms {
     private TestAlgorithms(){
 
@@ -76,19 +68,19 @@ public final class TestAlgorithms {
         return sum/N;
     }
 
-    public static double[] calculateAverage(ArrayList<Double> alist) {
+    public static ArrayList<Double> calculateAverage(ArrayList<Double> alist) {
         int n = alist.size();
         int N = 9;
-        double[] acc = new double[n];
+        ArrayList<Double> acc = new ArrayList<Double>();
 
         for (int i = 0; i < alist.size(); i++) {
             if (i < (N - 1) / 2) {
-                acc[i] = alist.get(i);
+                acc.add(alist.get(i));
 
             } else if (i > n - 1 - ((N - 1) / 2)) {
-                acc[i] = alist.get(i);
+                acc.add(alist.get(i));
             } else {
-                acc[i] = average(i, N, alist);
+                acc.add(average(i, N, alist));
             }
         }
         return acc;

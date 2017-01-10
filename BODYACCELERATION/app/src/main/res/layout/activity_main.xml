@@ -4,7 +4,8 @@
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.mathiasloh.bodyacceleration.MainActivity">
+    tools:context="com.example.mathiasloh.bodyacceleration.MainActivity"
+    android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,23 +21,17 @@
             android:text="Start" />
 
         <Button
-            android:id="@+id/btnStop"
+            android:id="@+id/btnAcceleration"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Acceleration" />
         <Button
-            android:id="@+id/btnVelocity"
+            android:id="@+id/btnComparison"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Velocity" />
-        <Button
-            android:id="@+id/btnShowPosition"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Position" />
+            android:text="Comparison" />
         <Button
             android:id="@+id/btnTests"
             android:layout_width="0dp"
