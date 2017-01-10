@@ -1,14 +1,16 @@
 package com.example.mathiasloh.bodyacceleration;
 
+import java.util.ArrayList;
+
 /**
  * Created by mathiasloh on 10/1/17.
  */
 
 public class AccelData {
-    private long timestamp;
-    private double x;
-    private double y;
-    private double z;
+    private ArrayList<Long> timestamp;
+    private ArrayList<Double> x;
+    private ArrayList<Double> y;
+    private ArrayList<Double> z;
 
     public AccelData(long timestamp, double x, double y, double z) {
         this.timestamp = timestamp;
