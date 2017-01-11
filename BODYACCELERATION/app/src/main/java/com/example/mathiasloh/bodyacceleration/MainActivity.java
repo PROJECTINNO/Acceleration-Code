@@ -1,9 +1,17 @@
 package com.example.mathiasloh.bodyacceleration;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Build;
 import android.os.Bundle;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import org.achartengine.ChartFactory;
@@ -21,18 +29,23 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Environment;
+import android.support.annotation.RequiresApi;
+import android.support.v4.app.ActivityCompat;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
+import com.opencsv.CSVWriter;
+
+@SuppressWarnings("ALL")
 public class MainActivity extends Activity implements SensorEventListener, OnClickListener{
     private SensorManager sensorManager;
-    private Button btnStart, btnAcceleration, btnComparison, btntestcurves;
+    private Button btnStart, btnAcceleration, btnUpload;
     private boolean started = false;
     private LinearLayout layout;
     private GraphicalView mChart;
-    private MyView mDrawing;
     float[] mGravf = null;
     float[] mMagnetf = null;
     private AccelData sensorData;
@@ -47,6 +60,26 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
     private ArrayList<Double> treated_data_z;
     private Canvas canvas = new Canvas();
     private Paint paint = new Paint();
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+
+    public static void verifyStoragePermissions(Activity activity) {
+        // Check if we have read or write permission
+        int writePermission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int readPermission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE);
+
+        if (writePermission != PackageManager.PERMISSION_GRANTED || readPermission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(
+                    activity,
+                    PERMISSIONS_STORAGE,
+                    REQUEST_EXTERNAL_STORAGE
+            );
+        }
+    }
 
 
     @Override
@@ -56,41 +89,21 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
         layout = (LinearLayout) findViewById(R.id.chart_container);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         sensorData = new AccelData();
+        verifyStoragePermissions(this);
         accx = new ArrayList<Double>();
         accy = new ArrayList<Double>();
         accz = new ArrayList<Double>();
 
         btnStart = (Button) findViewById(R.id.btnStart);
         btnAcceleration = (Button) findViewById(R.id.btnAcceleration);
-        btnComparison = (Button) findViewById(R.id.btnComparison);
-        btntestcurves = (Button) findViewById(R.id.btnTests);
+        btnUpload = (Button) findViewById(R.id.btnUpload);
         btnStart.setOnClickListener(this);
         btnAcceleration.setOnClickListener(this);
-        btnComparison.setOnClickListener(this);
-        btntestcurves.setOnClickListener(this);
+        btnUpload.setOnClickListener(this);
         btnStart.setEnabled(true);
         btnAcceleration.setEnabled(false);
         if (sensorData == null || sensorData.getX().size() == 0) {
-            btnComparison.setEnabled(false);
-            btntestcurves.setEnabled(false);
-        }
-    }
-
-    public class MyView extends View{
-        private float[] x;
-        public MyView(Context context, float[] x){
-            super(context);
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-            Paint paint = new Paint();
-            paint.setStyle(Paint.Style.FILL);
-            paint.setColor(Color.WHITE);
-            // Use Color.parseColor to define HTML colors
-            paint.setColor(Color.parseColor("#CD5C5C"));
-            canvas.drawLines(x, paint);
+            btnUpload.setEnabled(false);
         }
     }
 
@@ -109,9 +122,7 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
+    public void onAccuracyChanged(Sensor sensor, int accuracy) { }
 
 
     @Override
@@ -158,8 +169,7 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
             case R.id.btnStart:
                 btnStart.setEnabled(false);
                 btnAcceleration.setEnabled(true);
-                btnComparison.setEnabled(true);
-                btntestcurves.setEnabled(true);
+                btnUpload.setEnabled(true);
                 sensorData = new AccelData();
                 accx = new ArrayList<Double>();
                 accy = new ArrayList<Double>();
@@ -179,32 +189,25 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
             case R.id.btnAcceleration:
                 btnStart.setEnabled(true);
                 btnAcceleration.setEnabled(false);
-                btnComparison.setEnabled(true);
-                btntestcurves.setEnabled(true);
+                btnUpload.setEnabled(true);
                 started = false;
                 sensorManager.unregisterListener(this);
                 layout.removeAllViews();
                 openAcceleration();
 
                 break;
-            case R.id.btnComparison:
+            case R.id.btnUpload:
                 btnStart.setEnabled(true);
                 btnAcceleration.setEnabled(true);
-                btnComparison.setEnabled(false);
-                btntestcurves.setEnabled(true);
+                btnUpload.setEnabled(false);
                 started = false;
                 sensorManager.unregisterListener(this);
                 layout.removeAllViews();
-                openComparison();
-                break;
-            case R.id.btnTests:
-                started = false;
-                btnStart.setEnabled(true);
-                btnComparison.setEnabled(true);
-                btntestcurves.setEnabled(false);
-                sensorManager.unregisterListener(this);
-                layout.removeAllViews();
-//                plotCurves();
+                try {
+                    saveDataToCSV();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             default:
                 break;
@@ -344,6 +347,7 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     private void openComparison() {
         if (sensorData != null || sensorData.getX().size() > 0) {
             // --------- Setup MultiRenderer ----------------------------------- //
@@ -438,17 +442,51 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
                 points.add(Float.parseFloat(Double.toString(accy.get(i))));
                 points.add(Float.parseFloat(Double.toString(accx.get(i+1))));
                 points.add(Float.parseFloat(Double.toString(accy.get(i+1))));
-
             }
 
             float res[] = new float[accx.size()*2];
             for(int i = 0; i<points.size();i++){
                 res[i] = points.get(i);
+                System.out.println(res[i]);
             }
+            paint = new Paint();
+            paint.setColor(Color.parseColor("#CD5C5C"));
+            paint.setStyle(Paint.Style.STROKE);
+            Bitmap bg = Bitmap.createBitmap(1000,1000, Bitmap.Config.ARGB_8888);
+            canvas = new Canvas(bg);
+            canvas.drawCircle(500,500,200,paint);
+            canvas.drawLines(res ,paint);
+//            mDrawing = new MyView(this, res);
+            layout.setBackground(new BitmapDrawable(getResources(), bg));
 
-            layout.addView(mDrawing);
             // --------- End Plotting the drawing -----------------------------//
         }
     }
+    private void saveDataToCSV() throws IOException {
+        String baseDir = android.os.Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
+        String fileName = "AccelerationData.csv";
+        String filePath = baseDir + File.separator + fileName;
+        File f = new File(filePath);
 
+        CSVWriter writer;
+
+        if (f.exists() && !f.isDirectory()){
+            f.delete();
+            f = new File(filePath);
+            writer = new CSVWriter(new FileWriter(filePath));
+        } else {
+            writer = new CSVWriter(new FileWriter(filePath));
+        }
+
+        String[] data = "X,Y,Z".split(",");
+        writer.writeNext(data);
+
+        for (int i = 0; i < sensorData.getX().size(); i++){
+            String[] entry = {Double.toString(sensorData.getX().get(i)),
+                    Double.toString(sensorData.getY().get(i)), Double.toString(sensorData.getZ().get(i))};
+            writer.writeNext(entry);
+        }
+
+        writer.close();
+    }
 }

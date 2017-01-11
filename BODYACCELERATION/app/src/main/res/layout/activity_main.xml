@@ -4,6 +4,7 @@
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="horizontal"
     tools:context="com.example.mathiasloh.bodyacceleration.MainActivity"
     android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 
@@ -27,24 +28,18 @@
             android:layout_weight="1"
             android:text="Acceleration" />
         <Button
-            android:id="@+id/btnComparison"
+            android:id="@+id/btnUpload"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Comparison" />
-        <Button
-            android:id="@+id/btnTests"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Tests" />
+            android:text="Upload" />
 
     </LinearLayout>
     <LinearLayout
         android:id="@+id/chart_container"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/buttons"
-        android:orientation="vertical">
+        android:orientation="horizontal">
     </LinearLayout>`
 </RelativeLayout>
