@@ -127,6 +127,7 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+
         // Gets the value of the sensor that has been changed
         if (started) {
             if ((mGravf != null) && (mMagnetf != null) && (event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION)) {
