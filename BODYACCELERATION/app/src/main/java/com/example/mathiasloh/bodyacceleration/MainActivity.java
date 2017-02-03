@@ -66,7 +66,9 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
     private NotificationCompat.Builder mBuilder;
     private SensorManager sensorManager;
     private Button btnStart, btnAcceleration, btnUpload, btnStop;
+    private TextView mTextView;
     private EditText mTextField;
+    private EditText mPrepField;
     private boolean started = false;
     private RelativeLayout layout;
     private AudioManager audioManager;
@@ -91,6 +93,50 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
+    public class DrawCanvasCircle extends View {
+        int N;
+        float[] arrPoints;
+        int xvar;
+        int yvar;
+
+        public DrawCanvasCircle(Context mContext, ArrayList<Double> X, ArrayList<Double> Y, int xvar, int yvar) {
+            super(mContext);
+            N = accx.size();
+            this.xvar = xvar;
+            this.yvar = yvar;
+            System.out.println(xvar);
+            System.out.println(yvar);
+            ArrayList<Double> listPoints = new ArrayList<Double>();
+            listPoints.add(X.get(0)*150+(this.yvar)/2);
+            listPoints.add(Y.get(0)*150+this.xvar/2);
+
+            for (int i = 1; i < X.size()-1; i++){
+                listPoints.add(X.get(i)*150+this.yvar/2);
+                listPoints.add(Y.get(i)*150+this.xvar/2);
+                listPoints.add(X.get(i)*150+this.yvar/2);
+                listPoints.add(Y.get(i)*150+this.xvar/2);
+            }
+
+            listPoints.add(X.get(X.size()-1)*150+this.yvar/2);
+            listPoints.add(Y.get(Y.size()-1)*150+this.xvar/2);
+
+            arrPoints = new float[4*N-4];
+
+            for (int i = 0; i<4*N-4; i++){
+                arrPoints[i] = Float.parseFloat(listPoints.get(i).toString());
+            }
+        }
+
+        public void onDraw(Canvas canvas) {
+            Paint paint = new Paint();
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawColor(Color.WHITE);
+            paint.setColor(Color.BLUE);
+
+            canvas.drawLines(arrPoints, paint);
+        }
+
+    }
 
 //Display notification
 
@@ -126,6 +172,7 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 20, 0);
 
+        mPrepField = (EditText) findViewById((R.id.prepText));
         mTextField = (EditText) findViewById(R.id.editText);
         mTextField.setEnabled(false);
         btnStop = (Button) findViewById(R.id.btnStop);
@@ -233,7 +280,7 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
                 accy = new ArrayList<Double>();
                 accz = new ArrayList<Double>();
 
-                final Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+                Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
                 sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_GAME);
 
                 Sensor grav = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
@@ -242,7 +289,13 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
                 Sensor mag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
                 sensorManager.registerListener(this, mag, SensorManager.SENSOR_DELAY_GAME);
 
-                new CountDownTimer(30000, 1000) {
+                // ----------- FUTURE WORK -------------- //
+//                layout.addView(mTextView);
+//                mTextField.setVisibility(View.VISIBLE);
+                // ----------- FUTURE WORK -------------- //
+
+
+                new CountDownTimer(5000, 1000) {
 
                     public void onTick(long millisUntilFinished) {
                         started = true;
@@ -563,60 +616,58 @@ public class MainActivity extends Activity implements SensorEventListener, OnCli
 //                res[i] = points.get(i);
 //                System.out.println(res[i]);
 //            }
-            paint = new Paint();
-            paint.setColor(Color.parseColor("#CD5C5C"));
-            paint.setStyle(Paint.Style.STROKE);
-            Bitmap bg = Bitmap.createBitmap(1000,1000, Bitmap.Config.ARGB_8888);
-            canvas = new Canvas(bg);
-            canvas.drawCircle(500,500,200,paint);
-            canvas.drawLines(res ,paint);
-//            mDrawing = new MyView(this, res);
-            layout.setBackground(new BitmapDrawable(getResources(), bg));
+
 
             // --------- End Plotting the drawing -----------------------------//
         }
     }
     private void saveDataToCSV() throws IOException {
-        // --------- Reinitialize smoothing ---------------------//
-        accx = TestAlgorithms.calculateAverage(sensorData.getX());
-        accy = TestAlgorithms.calculateAverage(sensorData.getY());
-        accz = TestAlgorithms.calculateAverage(sensorData.getZ());
-        // --------- End reinitialize ---------------------------//
 
-        // --------- Setup Writing ------------------------------//
-        String baseDir = android.os.Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
-        Date date = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("ddMMyy-HH:mm:ss");
-        String fileName = "AccelData-" + dateFormat.format(date) + ".csv";
-
-        String filePath = baseDir + File.separator + fileName;
-        File f = new File(filePath);
-        CSVWriter writer;
-
-        if (f.exists() && !f.isDirectory()){
-            f.delete();
-            f = new File(filePath);
-            writer = new CSVWriter(new FileWriter(filePath));
-        } else {
-            writer = new CSVWriter(new FileWriter(filePath));
-        }
-
-        String[] data = "X,Y,Z, SMOOTHX, SMOOTHY, SMOOTHZ, t".split(",");
-        writer.writeNext(data);
-
-        for (int i = 0; i < sensorData.getX().size(); i++){
-            String[] entry = {
-                    Double.toString(sensorData.getX().get(i)),
-                    Double.toString(sensorData.getY().get(i)),
-                    Double.toString(sensorData.getZ().get(i)),
-                    Double.toString(accx.get(i)),
-                    Double.toString(accy.get(i)),
-                    Double.toString(accz.get(i)),
-                    Double.toString(sensorData.getTimestamp().get(i)- sensorData.getTimestamp().get(0))};
-            writer.writeNext(entry);
-        }
-
-        writer.close();
-        // --------- Setup Writing ------------------------------//
+        DrawCanvasCircle pcc = new DrawCanvasCircle (this, accx, accy, findViewById(R.id.chart_container).getHeight(), findViewById(R.id.chart_container).getWidth());
+        Bitmap result = Bitmap.createBitmap(5000,5000, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(result);
+        pcc.draw(canvas);
+        layout.addView(pcc);
+//        // --------- Reinitialize smoothing ---------------------//
+//        accx = TestAlgorithms.calculateAverage(sensorData.getX());
+//        accy = TestAlgorithms.calculateAverage(sensorData.getY());
+//        accz = TestAlgorithms.calculateAverage(sensorData.getZ());
+//        // --------- End reinitialize ---------------------------//
+//
+//        // --------- Setup Writing ------------------------------//
+//        String baseDir = android.os.Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
+//        Date date = new Date();
+//        SimpleDateFormat dateFormat = new SimpleDateFormat("ddMMyy-HH:mm:ss");
+//        String fileName = "AccelData-" + dateFormat.format(date) + ".csv";
+//
+//        String filePath = baseDir + File.separator + fileName;
+//        File f = new File(filePath);
+//        CSVWriter writer;
+//
+//        if (f.exists() && !f.isDirectory()){
+//            f.delete();
+//            f = new File(filePath);
+//            writer = new CSVWriter(new FileWriter(filePath));
+//        } else {
+//            writer = new CSVWriter(new FileWriter(filePath));
+//        }
+//
+//        String[] data = "X,Y,Z, SMOOTHX, SMOOTHY, SMOOTHZ, t".split(",");
+//        writer.writeNext(data);
+//
+//        for (int i = 0; i < sensorData.getX().size(); i++){
+//            String[] entry = {
+//                    Double.toString(sensorData.getX().get(i)),
+//                    Double.toString(sensorData.getY().get(i)),
+//                    Double.toString(sensorData.getZ().get(i)),
+//                    Double.toString(accx.get(i)),
+//                    Double.toString(accy.get(i)),
+//                    Double.toString(accz.get(i)),
+//                    Double.toString(sensorData.getTimestamp().get(i)- sensorData.getTimestamp().get(0))};
+//            writer.writeNext(entry);
+//        }
+//
+//        writer.close();
+//        // --------- Setup Writing ------------------------------//
     }
 }
